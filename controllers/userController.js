@@ -1,10 +1,11 @@
 import User from "../models/userModels.js";
 import bcrypt from "bcrypt"
 import generateTokenAndSetCookies from "../utils/helpers/generateTokenAndSetCookie.js";
+import { v2 as cloudinary } from "cloudinary"
 
 const signupUser = async (req, res) => {
     try {
-        const { name, email, username, password } = req.body;
+        const { name, email, username, password, profilepic } = req.body;
         const salt = await bcrypt.genSalt(10)
         const hashPassword = await bcrypt.hash(password, salt);
 
@@ -18,6 +19,7 @@ const signupUser = async (req, res) => {
             name,
             email,
             username,
+            profilepic,
             password: hashPassword
         });
         await newUser.save();
@@ -28,7 +30,9 @@ const signupUser = async (req, res) => {
                 _id: newUser._id,
                 name: newUser.name,
                 email: newUser.email,
-                username: newUser.username
+                username: newUser.username,
+                bio: newUser.bio,
+                profilepic: newUser.profilepic
             })
         } else {
             res.status(400).json({ message: "invalid user data" })
@@ -54,7 +58,9 @@ const loginUser = async (req, res) => {
             _id: user.id,
             name: user.name,
             email: user.email,
-            username: user.username
+            username: user.username,
+            bio: user.bio,
+            profilepic: user.profilepic
         })
 
     } catch (err) {
@@ -105,7 +111,8 @@ const followUnFollowUser = async (req, res) => {
 
 const updateUser = async (req, res) => {
 
-    const { username, name, email, password, profilepic, bio } = req.body
+    const { username, name, email, password, bio } = req.body
+    let { profilepic } = req.body
     const userId = req.user._id;
     try {
         let user = await User.findById(userId);
@@ -117,6 +124,14 @@ const updateUser = async (req, res) => {
             const salt = await bcrypt.genSalt(10);
             const hashedPassword = await bcrypt.hash(password, salt);
             user.password = hashedPassword;
+        }
+
+        if (profilepic) {
+            if (user.profilepic) {
+                await cloudinary.uploader.destroy(user.profilepic.split("/").pop().split(".")[0])
+            }
+            const uploadedResponse = await cloudinary.uploader.upload(profilepic);
+            profilepic = uploadedResponse.secure_url
         }
 
         user.name = name || user.name
