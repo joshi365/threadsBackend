@@ -22,7 +22,7 @@ const userSchema = mongoose.Schema({
     },
     profilepic: {
         type: String,
-        defaul: []
+        default: ""
     },
     following: {
         type: [String],
