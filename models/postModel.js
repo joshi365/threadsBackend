@@ -6,6 +6,7 @@ const postSchema = mongoose.Schema({
         ref: "User",
         required: true
     },
+
     text: {
         type: String,
         maxLenth: 500
